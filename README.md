@@ -1,2 +1,2 @@
 # algorithms
-Random competitive programming algorithm implementation by me, because why not?
+Random competitive programming algorithms implementations by me, because why not?
