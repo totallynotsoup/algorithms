@@ -1,63 +1,60 @@
-#include <algorithm>
-#include <iostream>
-#include <limits>
-#include <vector>
-#include <cmath>
+#include <bits/stdc++.h>
 
 using namespace std;
 
-// sqrt decomposition implementation with templates
+struct sqrtdecomposition {
+    vector<long long> a, bi;
+    vector<long long> b, bl, br;
+    int bsz = 1000;
+    long long def = 0, n = 0;
 
-template <typename Nt>
-class rootdecomposition {
-    int block, _size; Nt prproc_val;
-    Nt (*query)(Nt x, Nt y);
+    long long combine(long long x, long long y) {
+        return x + y;
+    }
 
-    vector<Nt> raw;
-    vector<Nt> proc;
-
-    // Arguments:
-    // raw ---> link to vector that will be copied to decomposition
-    // query (<numeral type> X, <numeral type> Y) ---> query function
-    // prproc_val ---> stating value that will be set up as query result before it is actually calculated
-
-    public:
-        rootdecomposition (vector<Nt> & _raw, Nt (*_query)(Nt _x, Nt _y), Nt _prproc_val) {
-            raw = _raw, query = _query, prproc_val = _prproc_val;
-            _size = raw.size();
-
-            proc.resize(_size, prproc_val);        
-
-            block = (int) sqrt (_size + 0.0) + 1;
-            for (int i = 0; i < _size; ++i)
-                proc[i / block] = query(proc[i / block], raw[i]);
+    sqrtdecomposition(vector<long long> r) {
+        n = (int) r.size();
+        a = r;
+        bi.resize(n);
+        // bsz = (int) sqrtl(n);
+        for (int i = 0; i < n; i++) {
+            bi[i] = i / bsz;
         }
+        b.resize(bi[n - 1] + 1, def);
+        bl.resize(bi[n - 1] + 1, 10000000);
+        br.resize(bi[n - 1] + 1, -1);
+        for (int i = 0; i < n; ++i) {
+            b[bi[i]] = combine(b[bi[i]], a[i]);
+            bl[bi[i]] = min(bl[bi[i]], i);
+            br[bi[i]] = max(br[bi[i]], i);
+        }
+    }
 
-        Nt qsegment (int l, int r) {
-            Nt res = prproc_val;
-            for (int i = l; i <= r;) {
-                if ((not (i % block)) and (i + block - 1 <= r)) {
-                    res = query(res, proc[i / block]); i += block;
-                }
-                else {
-                    res = query(res, raw[i]); ++i;
-                }
-            }
+    void update(int i, long long v) {
+        a[i] = v;
+        b[bi[i]] = def;
+        for (int j = bl[bi[i]]; j <= br[bi[i]]; ++j) {
+            // cout << j << " " << bi[j] << " " << b.size() << endl;
+            b[bi[j]] = combine(b[bi[j]], a[j]);
+        }
+    }
+
+    long long query(int l, int r) {
+        if (b[bi[l]] == b[bi[r]]) {
+            long long res = def;
+            for (int i = l; i <= r; ++i)
+                res = combine(res, a[i]);
             return res;
         }
-
-        void update (int pos, Nt newval) {
-            raw[pos] = newval;
-
-            int ublock = (pos + 1) / block;
-            proc[ublock] = prproc_val;
-
-            for (int i = ublock * block; i < ublock * block + block - 1 and i < _size; ++i) {
-                proc[ublock] = query(proc[ublock], raw[i]);
-            }
+        else {
+            long long res = def;
+            for (int i = l; i <= br[bi[l]]; ++i)
+                res = combine(res, a[i]);
+            for (int i = r; i >= bl[bi[r]]; --i)
+                res = combine(res, a[i]);
+            for (int i = bi[l] + 1; i <= bi[r] - 1; ++i)
+                res = combine(res, b[i]);
+            return res;
         }
-
-        size_t size () {
-            return _size;
-        }
+    }
 };
